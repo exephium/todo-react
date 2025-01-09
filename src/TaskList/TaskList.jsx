@@ -5,7 +5,6 @@ function TaskList() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
   const [status, setStatus] = useState('initial');
-  const [errorData, setErrorData] = useState('');
 
   useEffect(() => {
     setStatus('loading');
@@ -17,19 +16,20 @@ function TaskList() {
         setStatus('success');
       })
       .catch((err) => {
-        setErrorData(err);
-        setStatus('error');
+        alert(err);
       });
   }, []);
 
   const handleAddTask = async () => {
     if (newTask.trim() === '') return;
 
+    const previousTaskList = tasks
     const newTaskData = {
       userId: 1,
       title: newTask,
       completed: false,
     };
+    setTasks([...tasks, newTaskData]);
 
     try {
       const response = await fetch('https://jsonplaceholder.typicode.com/todos', {
@@ -39,93 +39,66 @@ function TaskList() {
           'Content-type': 'application/json; charset=UTF-8',
         },
       });
-      const newTask = await response.json();
 
-      setTasks([...tasks, newTask]);
+      if (!response.ok) {
+        setTasks(previousTaskList);
+        throw new Error('Не удалось добавить задачу');
+      }
     } catch (err) {
-      setErrorData(err);
+      alert(err)
     }
   };
 
   const handleDeleteTask = async (taskId) => {
+    const previousTaskList = tasks
+
+    const updatedTaskList = tasks.filter((task) => task.id !== taskId)
+    setTasks(updatedTaskList);
+
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${taskId}`, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        const updatedTaskList = tasks.filter((task) => task.id !== taskId)
-        setTasks(updatedTaskList);
-      } else {
+      if (!response.ok) {
+        setTasks(previousTaskList)
         throw new Error('Не удалось удалить задачу');
       }
     } catch (err) {
-      setErrorData(err);
+      alert(err);
     }
   };
 
-  const handleEditTask = async (taskId, newText) => {
+  const handleEditTask = async (taskId, updateData) => {
+    const previousTaskList = tasks
+
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId)
+        return { ...task, ...updateData };
+      return task
+    });
+    setTasks(updatedTasks);
+
     try {
       const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${taskId}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          title: newText,
-        }),
+        body: JSON.stringify(updateData),
         headers: {
           'Content-type': 'application/json; charset=UTF-8',
         },
       });
 
-      if (response.ok) {
-        const updatedTasks = tasks.map(task => {
-          if (task.id === taskId)
-            return { ...task, title: newText };
-          return task
-        });
-
-        setTasks(updatedTasks);
-      } else {
-        throw new Error('Не удалось обновить задачу');
+      if (!response.ok) {
+        setTasks(previousTaskList);
+        throw Error('Не удалось обновить запись!')
       }
     } catch (err) {
-      setErrorData(err);
-    }
-  };
-
-  const handleToggleTask = async (taskId, isCompleted) => {
-    try {
-      const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          completed: isCompleted,
-        }),
-        headers: {
-          'Content-type': 'application/json; charset=UTF-8',
-        },
-      });
-
-      if (response.ok) {
-        const updatedTasks = tasks.map(task => {
-          if (task.id === taskId)
-            return { ...task, completed: isCompleted };
-          return task
-        });
-
-        setTasks(updatedTasks);
-      } else {
-        throw new Error('Не удалось обновить задачу');
-      }
-    } catch (err) {
-      setErrorData(err);
+      alert(err)
     }
   };
 
   if (status === 'loading') {
     return <div>Загрузка...</div>;
-  }
-
-  if (status === 'error') {
-    return <div>{errorData.message}</div>;
   }
 
   return (
@@ -148,7 +121,7 @@ function TaskList() {
             task={task}
             onDelete={handleDeleteTask}
             onEdit={handleEditTask}
-            onToggle={handleToggleTask}
+            onToggle={handleEditTask}
           />
         ))}
       </div>

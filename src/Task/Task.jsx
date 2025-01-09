@@ -7,7 +7,7 @@ function Task({ task, onDelete, onEdit, onToggle }) {
   const handleEditChange = (e) => setNewText(e.target.value);
 
   const handleSave = () => {
-    onEdit(task.id, newText);
+    onEdit(task.id, { title: newText });
     setNewText(null)
     setIsEdit(false);
   };
@@ -23,7 +23,7 @@ function Task({ task, onDelete, onEdit, onToggle }) {
         className={isEdit && 'hide'}
         type="checkbox"
         checked={task.completed}
-        onChange={() => onToggle(task.id, !task.completed)}
+        onChange={() => onToggle(task.id, { completed: !task.completed })}
       />
 
       {isEdit ? (
