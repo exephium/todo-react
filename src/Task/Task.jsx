@@ -1,16 +1,21 @@
-// src/Task.js
 import React, { useState } from 'react';
 
 function Task({ task, onDelete, onEdit, onToggle }) {
   const [isEdit, setIsEdit] = useState(false);
-  const [newText, setNewText] = useState(task.title);
+  const [newText, setNewText] = useState(null);
 
   const handleEditChange = (e) => setNewText(e.target.value);
 
   const handleSave = () => {
     onEdit(task.id, newText);
+    setNewText(null)
     setIsEdit(false);
   };
+
+  const handleEdit = () => {
+    setNewText(task.title)
+    setIsEdit(true)
+  }
 
   return (
     <div className="task">
@@ -18,7 +23,7 @@ function Task({ task, onDelete, onEdit, onToggle }) {
         className={isEdit && 'hide'}
         type="checkbox"
         checked={task.completed}
-        onChange={() => onToggle(task.id)}
+        onChange={() => onToggle(task.id, !task.completed)}
       />
 
       {isEdit ? (
@@ -33,7 +38,7 @@ function Task({ task, onDelete, onEdit, onToggle }) {
 
       <button onClick={() => onDelete(task.id)}>Удалить</button>
 
-      <button onClick={isEdit ? handleSave : () => setIsEdit(true)}>
+      <button onClick={isEdit ? handleSave : handleEdit}>
         {!isEdit ? 'Редактировать' : 'Сохранить' }
       </button>
     </div>
